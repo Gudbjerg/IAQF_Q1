@@ -31,6 +31,9 @@ Key outputs:
 - Coinbase BTCUSD has **≈ 290** genuine "no trade" 1‑minute gaps that we treat as missing, not errors.
 
 Economically, Binance BTCUSDT trades almost every minute (deep off‑shore USDT venue), while Coinbase BTCUSD has occasional gaps (shallower on‑shore USD venue).
+This reflects minutes where Coinbase BTC-USD has **no candle**, which is
+consistent with brief daily pauses / gaps the markets has (around ~10 minutes per day over
+this window).
 
 Figure 1 plots the mid prices of BTCUSDT and BTCUSD over the sample, while Figure 2 reports the corresponding trading volumes on Binance and Coinbase, illustrating both the tight co‑movement in prices and the asymmetry in liquidity across venues.
 
@@ -183,7 +186,41 @@ Putting the distributions, cost‑band exceedances, persistence, and regressions
 
 ---
 
-## 9. Conclusions (Directly Answering Q1)
+## 9. Advanced Econometric, Trading, and Risk Results
+
+### Cointegration and Granger Causality
+- **Johansen test**: Strong evidence for at least one cointegrating relationship between BTCUSDT and BTCUSD (eigenvalue ≈ 26.75 > critical values), confirming a long-run equilibrium.
+- **Engle-Granger test**: p-value ≈ 0.18, so we do not strongly reject the null of no cointegration at conventional levels, but the Johansen result dominates for this bivariate system.
+- **Granger causality**: Both directions are highly significant, but USDT→USD is especially strong (p-values < 0.01 for all lags). This means price moves in USDT markets help forecast USD markets, consistent with Binance's leading role in global BTC price discovery.
+
+### Rolling Volatility and Correlation
+- Rolling volatility and return correlation between venues are visualized in Figure 5. Volatility spikes and correlation dips coincide with stress periods, confirming the impact of market turmoil on price dynamics.
+
+### Outlier Timeline and Frequency
+- Outlier events (large basis deviations) cluster during stress and show distinct intraday patterns. Figure 6 (multi-sigma) shows the timeline and daily frequency of outliers for |z|>1, 2, 3. This directly visualizes when and how much clustering occurs, highlighting stress and regime shifts.
+
+### Trade Simulation and Risk Metrics
+- A simple mean-reversion strategy (trading when the basis exceeds the cost band) yields:
+  - **17 trades**
+  - **Hit rate:** 70.6%
+  - **Mean P&L:** 0.00070
+  - **Annualized return:** 102.4%
+- Risk metrics:
+  - **VaR_95:** −0.00639
+  - **Max drawdown:** −0.00934
+- These results show that while the strategy is profitable in this sample, it is not riskless—drawdowns and tail risk are present, and opportunities are clustered in stress.
+
+### Robustness Checks
+- Varying the fee band from 0.3% to 0.7% changes the share of minutes exceeding costs from 36.4% to 7.9%, but the main qualitative findings are robust. Mids-based robustness was not available due to data limitations.
+
+### Expanded Economic Discussion
+- The lead-lag structure (Granger) and cointegration confirm that Binance/USDT markets often lead price discovery, but the linkage is not perfect in the short run.
+- Outlier and risk analysis show that stress periods create both more frequent and more clustered arbitrage opportunities, but also higher risk and drawdowns.
+- The robustness of results to fee bands and the persistence of dislocations reinforce the story of constrained, risky, and slow arbitrage between venues.
+
+---
+
+## 10. Conclusions (Directly Answering Q1)
 
 Relative to the competition question, the evidence shows that:
 
@@ -196,10 +233,15 @@ Relative to the competition question, the evidence shows that:
 
 ## Figures
 
-- **Figure 1** – BTCUSDT vs BTCUSD mid prices (1‑minute). See [figures/fig_mid_prices.png](figures/fig_mid_prices.png). Prices on Binance (USDT) and Coinbase (USD) move almost indistinguishably, confirming that we are observing the same underlying asset.
-- **Figure 2** – Trading volume by venue (1‑minute). See [figures/fig_volumes.png](figures/fig_volumes.png). Binance volumes are much higher and spikier than Coinbase volumes, consistent with Binance being the deeper off‑shore USDT venue.
-- **Figure 3** – BTCUSDT–BTCUSD log basis with 0.5% cost band. See [figures/fig_basis_with_band.png](figures/fig_basis_with_band.png). The basis oscillates around a modest negative level in calm periods, plunges well below the cost band during the March 10–13 stress episode, and settles into a more negative post‑stress regime.
-- **Figure 4** – Basis histograms: full sample, normal vs stress. See [figures/fig_basis_histograms.png](figures/fig_basis_histograms.png). The overall distribution is left‑skewed, with a pronounced negative tail that becomes much thicker in the stress subsample, documenting the widening and asymmetry of the USDT discount.
+- **Figure 1** – BTCUSDT vs BTCUSD mid prices (1‑minute). See [figures/fig_mid_prices.png](figures/fig_mid_prices.png).
+- **Figure 2** – Trading volume by venue (1‑minute). See [figures/fig_volumes.png](figures/fig_volumes.png).
+- **Figure 3** – BTCUSDT–BTCUSD log basis with 0.5% cost band. See [figures/fig_basis_with_band.png](figures/fig_basis_with_band.png).
+- **Figure 4** – Basis histograms: full sample, normal vs stress. See [figures/fig_basis_histograms.png](figures/fig_basis_histograms.png).
+- **Figure 5** – Rolling volatility and return correlation. See [figures/fig_rolling_vol_corr.png](figures/fig_rolling_vol_corr.png).
+- **Figure 6** – Outlier timeline and daily frequency (multi-sigma). See [figures/fig_outlier_timeline_multi.png](figures/fig_outlier_timeline_multi.png).
+- **Figure 7** – Trade simulation: P&L, hit rate, annualized return. See [figures/fig_trade_simulation.png](figures/fig_trade_simulation.png).
+- **Figure 8** – Risk and leverage metrics (VaR, drawdown). See [figures/fig_risk_leverage.png](figures/fig_risk_leverage.png).
+- **Figure 9** – Intraday/session pattern of cost-band exceedance. See [figures/fig_intraday_session.png](figures/fig_intraday_session.png).
 
 ---
 
@@ -228,3 +270,39 @@ pip install -r requirements.txt
 3. Open `notebooks/Q1_cross_currency_basis.ipynb` in VS Code or Jupyter and run all cells.
 
 This will regenerate the cleaned data, basis series, cost‑band metrics, persistence diagnostics, regression tables and the plots referred to in this README.
+
+---
+
+## 9. Advanced Econometric, Trading, and Risk Results
+
+### Cointegration and Granger Causality
+- **Johansen test**: Strong evidence for at least one cointegrating relationship between BTCUSDT and BTCUSD (eigenvalue ≈ 26.75 > critical values), confirming a long-run equilibrium.
+- **Engle-Granger test**: p-value ≈ 0.18, so we do not strongly reject the null of no cointegration at conventional levels, but the Johansen result dominates for this bivariate system.
+- **Granger causality**: Both directions are highly significant, but USDT→USD is especially strong (p-values < 0.01 for all lags). This means price moves in USDT markets help forecast USD markets, consistent with Binance's leading role in global BTC price discovery.
+
+### Rolling Volatility and Correlation
+- Rolling volatility and return correlation between venues are visualized in Figure 5. Volatility spikes and correlation dips coincide with stress periods, confirming the impact of market turmoil on price dynamics.
+
+### Outlier Timeline and Frequency
+- Outlier events (large basis deviations) cluster during stress and show distinct intraday patterns. Figure 6 (multi-sigma) shows the timeline and daily frequency of outliers for |z|>1, 2, 3. This directly visualizes when and how much clustering occurs, highlighting stress and regime shifts.
+
+### Trade Simulation and Risk Metrics
+- A simple mean-reversion strategy (trading when the basis exceeds the cost band) yields:
+  - **17 trades**
+  - **Hit rate:** 70.6%
+  - **Mean P&L:** 0.00070
+  - **Annualized return:** 102.4%
+- Risk metrics:
+  - **VaR_95:** −0.00639
+  - **Max drawdown:** −0.00934
+- These results show that while the strategy is profitable in this sample, it is not riskless—drawdowns and tail risk are present, and opportunities are clustered in stress.
+
+### Robustness Checks
+- Varying the fee band from 0.3% to 0.7% changes the share of minutes exceeding costs from 36.4% to 7.9%, but the main qualitative findings are robust. Mids-based robustness was not available due to data limitations.
+
+### Expanded Economic Discussion
+- The lead-lag structure (Granger) and cointegration confirm that Binance/USDT markets often lead price discovery, but the linkage is not perfect in the short run.
+- Outlier and risk analysis show that stress periods create both more frequent and more clustered arbitrage opportunities, but also higher risk and drawdowns.
+- The robustness of results to fee bands and the persistence of dislocations reinforce the story of constrained, risky, and slow arbitrage between venues.
+
+---
