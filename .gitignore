@@ -23,3 +23,7 @@ data/processed/
 *.tmp
 *.log
 *~
+
+#papers
+.papers/
+.IAQF Student
