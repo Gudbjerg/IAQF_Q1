@@ -1,283 +1,99 @@
-# IAQF 2026 – Question 1: Cross-Currency Basis (BTC/USDT vs BTC/USD)
+# IAQF 2026 — Q1: Cross-Currency Basis in BTC Markets
 
-This repository contains code, data and analysis for Question 1 of the IAQF 2026 student competition. The goal is to measure and explain the **cross-currency basis** between BTC priced in USDT (Binance BTCUSDT) and BTC priced in USD (Coinbase BTCUSD) over March 2023, with particular focus on the March 10–13 banking/stablecoin stress episode.
+**International Association for Quantitative Finance (IAQF) Annual Student Competition**
 
-All empirical results are generated in the notebook `notebooks/Q1_cross_currency_basis.ipynb`.
+> Bitcoin trades simultaneously on dozens of exchanges, quoted in different currencies. We study a subtle but consequential question: *does it matter whether you buy BTC with real US dollars or with USDT, a dollar-pegged stablecoin?* The short answer is yes — and the gap widens sharply in times of stress.
 
----
-
-## 1. Question and Setup
-
-In words, we ask: **How do BTC/USDT and BTC/USD prices differ over time, is there a persistent cross-currency basis once realistic transaction costs are included, and what drives that basis?** We study BTCUSDT on Binance and BTCUSD on Coinbase at 1‑minute frequency from **2023‑03‑01 to 2023‑03‑21 (UTC)**, a period that includes a major banking and stablecoin stress around **March 10–13**.
+📄 **[Full paper: report.pdf](report.pdf)**  
+📓 **[Analysis notebook: notebooks/Q1_cross_currency_basis.ipynb](notebooks/Q1_cross_currency_basis.ipynb)**
 
 ---
 
-## 2. Data, Cleaning, and Alignment
+## The Competition
 
-- **Assets:** BTCUSDT (Binance spot) and BTCUSD (Coinbase spot).
-- **Frequency:** 1‑minute OHLCV candles.
-- **Period:** 2023‑03‑01–2023‑03‑21 (UTC).
-- **Cleaning and alignment:**
-  - Parse timestamps to UTC and keep core OHLCV columns.
-  - Remove duplicate timestamps.
-  - Drop rows with non‑positive prices or negative volume.
-  - Align both legs on a common 1‑minute UTC grid over their overlapping window.
-  - Drop minutes where either close price is missing when forming the basis.
+The [IAQF Annual Academic Competition](https://iaqf.org/) challenges student teams to tackle live problems in quantitative finance. The 2026 edition focuses on cryptocurrency market microstructure and cross-asset dynamics across regulated and unregulated venues.
 
-Key outputs:
-
-- Overlapping window: full sample in the stated period.
-- Number of valid basis minutes: **≈ 29 950**.
-- Coinbase BTCUSD has **≈ 290** genuine "no trade" 1‑minute gaps that we treat as missing, not errors.
-
-Economically, Binance BTCUSDT trades almost every minute (deep off‑shore USDT venue), while Coinbase BTCUSD has occasional gaps (shallower on‑shore USD venue).
-This reflects minutes where Coinbase BTC-USD has **no candle**, which is
-consistent with brief daily pauses / gaps the markets has (around ~10 minutes per day over
-this window).
-
-Figure 1 plots the mid prices of BTCUSDT and BTCUSD over the sample, while Figure 2 reports the corresponding trading volumes on Binance and Coinbase, illustrating both the tight co‑movement in prices and the asymmetry in liquidity across venues.
+**Our question (Q1):** Measure and explain the *cross-currency basis* — the price difference between BTC quoted in USDT on Binance (the world's largest crypto exchange, offshore) and BTC quoted in USD on Coinbase (the largest US-regulated exchange) — over a 21-day window that includes the March 2023 banking and stablecoin crisis.
 
 ---
 
-## 3. Basis Definition and Transaction Costs
+## The Story
 
-Let \(P^{USDT}_t\) be the BTCUSDT price (Binance) and \(P^{USD}_t\) the BTCUSD price (Coinbase). The log cross‑currency basis is
+When Silicon Valley Bank failed on March 10, 2023, it triggered a brief de-pegging of USDC (a major stablecoin). Even though Tether (USDT) held its peg, *all* crypto-dollars traded at a discount to real bank dollars. This shows up clearly in BTC prices:
 
-$$
-b_t = \log P^{USDT}_t - \log P^{USD}_t.
-$$
+- **Normal times:** BTC costs ~0.24% more on Coinbase (USD) than Binance (USDT) — a small but persistent premium for regulated, bank-settled dollars
+- **March 10–13 stress:** That gap widened to ~1.5% and stayed wide for hours
 
-- \(b_t < 0\): BTCUSDT is cheaper than BTCUSD (USDT **discount**).
-- \(b_t > 0\): BTCUSDT is richer than BTCUSD (USDT **premium**).
-
-We work with log prices so that small relative differences behave like percentage gaps: for small changes, \(b_t \approx (P^{USDT}_t - P^{USD}_t)/P^{USD}_t\).
-
-### Transaction-cost band (no‑arb region)
-
-We proxy spot taker fees as:
-
-- Binance: 0.10% \((0.001)\).
-- Coinbase: 0.40% \((0.004)\).
-
-For small \(x\), \(\log(1+x) \approx x\), so the total round‑trip log cost is approximated by
-
-$$
-  au \approx 0.001 + 0.004 = 0.005 \quad (\text{about } 0.5\%).
-$$
-
-We treat \(\pm \tau\) as a **no‑arbitrage band**:
-
-- If \(|b_t| \le \tau\), the deviation is not large enough to cover trading costs.
-- If \(|b_t| > \tau\), the deviation is potentially exploitable after costs.
-
-We also store direction‑specific bands (currently equal numerically) so that asymmetric or time‑varying cost assumptions can be imposed later.
+Why didn't arbitrageurs close it instantly? Because moving capital between a US-regulated venue and an offshore exchange is slow, costly, and especially risky during a crisis. The gap represents real, measurable *funding risk* built into the USDT/USD spread.
 
 ---
 
-## 4. Level of Premium/Discount
+## Key Results
 
-Over the full sample of ≈29 950 minutes, the basic moments of the basis are:
+| Metric | Value |
+|---|---|
+| Mean log basis (USDT − USD) | **−0.24%** (USDT persistently cheaper) |
+| Peak basis during March 10–13 | **~−1.5%** |
+| AR(1) half-life of the basis | **~7.5 hours** — dislocations are slow to mean-revert |
+| Minutes exceeding 0.5% cost band | **13.3%** — and 100% one-sided (always USDT discount) |
+| Price discovery leader | **Binance** (60% Hasbrouck information share) |
 
-| Statistic                | Value (approx.) |
-|--------------------------|-----------------|
-| Mean basis               | −0.24%          |
-| Median basis             | −0.23%          |
-| Standard deviation       | 0.29%           |
-| Share with \(|z_t|>2\)   | 6.2%            |
-| Share with \(|z_t|>3\)   | 2.0%            |
-
-where \(z_t = (b_t - \bar b)/\sigma_b\) is the z‑score.
-
-- BTCUSDT and BTCUSD prices track each other extremely closely at 1‑minute frequency, but **BTCUSDT trades at a systematic discount**: mean and median around **−0.24% to −0.23%**.
-- The discount is **regime‑dependent**:
-  - In calm days (March 1–9), the basis fluctuates narrowly around a small negative level.
-  - During the March 10–13 stress window, the basis falls sharply (down to roughly **−1.5%**) and then settles into a more negative post‑stress plateau.
-- About **6.2%** of minutes are more than **2σ** away from the mean and **2.0%** more than **3σ**, with these extremes heavily concentrated in the stress period.
-
-The notebook provides time‑series charts of BTCUSDT/BTCUSD mid prices and of the basis with horizontal lines at 0 and ±\(\tau\), as well as histograms for the full sample and for normal vs stress regimes.
-In particular, Figure 3 shows the basis time series together with the 0.5% transaction‑cost band, and Figure 4 displays the distribution of the basis overall and split into normal vs stress periods.
-
----
-
-## 5. After Transaction Costs: No‑Arb Band
-
-Using the symmetric fee band \(\tau \approx 0.5\%\):
-
-| Metric                                      | Value (approx.) |
-|---------------------------------------------|------------------|
-| Total basis minutes                         | 29 950           |
-| Minutes with \(|b_t| > \tau\)               | 3 986            |
-| Share with \(|b_t| > \tau\)                 | 13.3%            |
-| Share with \(b_t > \tau\) (USDT rich)       | 0.0%             |
-| Share with \(b_t < -\tau\) (USDT cheap)     | 13.3%            |
-
-- About **13.3%** of minutes have \(|b_t|\) larger than our 0.5% fee band.
-- **All** such minutes are negative basis: BTCUSDT is cheap vs BTCUSD; there are effectively **no minutes** where BTCUSDT is rich enough after costs to justify the opposite trade.
-- These cost‑adjusted dislocations cluster in and around the March 10–13 stress period; in calmer days, deviations rarely clear the fee band.
-
-Thus, once trading costs are included, large, economically meaningful gaps appear reasonably often, but almost exclusively on the **USDT‑discount** side.
-
----
-
-## 6. Persistence of the Cross-Currency Basis
-
-We estimate an AR(1) model
-
-$$
-b_t = \alpha + \phi b_{t-1} + \varepsilon_t
-$$
-
-on the 1‑minute basis series and compute half‑lives
-
-$$
-  ext{half-life} = \frac{\ln 0.5}{\ln |\phi|}.
-$$
-
-| Regime   | \(\phi\) (approx.) | Half‑life (minutes) | Half‑life (hours) |
-|----------|----------------------|----------------------|-------------------|
-| Overall  | 0.9985               | ≈ 448                | ≈ 7.5             |
-| Normal   | 0.9972               | ≈ 248                | ≈ 4.1             |
-| Stress   | 0.9980               | ≈ 341                | ≈ 5.7             |
-
-An Augmented Dickey–Fuller test yields a statistic of about −2.77 with p‑value ≈ 0.063: the basis is very persistent but likely stationary over this window.
-
-Interpretation:
-
-- Once a basis shock appears—especially in stress—it decays only gradually over **several hours**, not within a few minutes.
-- Dislocations that are large enough to beat costs are therefore **persistent in time**, not fleeting microstructure noise.
-
----
-
-## 7. What Drives the Basis? (Stress, Volatility, Volume)
-
-We construct the following drivers from the BTCUSD leg and the stress window definition:
-
-- `stress`: dummy = 1 during **2023‑03‑10–13**, 0 otherwise.
-- `rv_usd_60`: 60‑minute rolling standard deviation of BTCUSD 1‑minute log returns (realized volatility proxy).
-- `volume_usd_scaled`: BTCUSD volume divided by its median (liquidity proxy).
-- `basis_lag1`: previous‑minute basis, included to capture persistence.
-
-The main regression is
-
-$$
-\text{basis}_t = \beta_0 + \beta_1\,\text{stress}_t + \beta_2\,\text{rv\_usd\_60,t} + \beta_3\,\text{volume\_usd\_scaled,t} + \beta_4\,\text{basis}_{t-1} + \varepsilon_t.
-$$
-
-Qualitative results (from the OLS output):
-
-- **Lagged basis** (\(\beta_4 \approx 0.997\)) dominates short‑run dynamics, confirming the strong AR(1) persistence.
-- **Realized volatility** (\(\beta_2 < 0\)) is significantly negative: when BTCUSD volatility is high, the BTCUSDT–BTCUSD basis becomes **more negative** (USDT‑leg cheapens).
-- **Stress dummy** (\(\beta_1 < 0\)) is also negative conditional on volatility: even after controlling for volatility and persistence, the stress window tilts the basis further negative.
-- **USD volume** (\(\beta_3 > 0\)) is small and positive: greater USD‑venue liquidity is associated with a slightly **less negative** basis.
-
-Interpretation: volatility and systemic stress widen the USDT discount, while deeper USD liquidity on Coinbase modestly mitigates it.
-
----
-
-## 8. Economic Interpretation: Why a USDT Discount?
-
-Putting the distributions, cost‑band exceedances, persistence, and regressions together yields a coherent narrative:
-
-- **USDT carries credit/peg and regulatory risk** relative to bank USD. Investors demand a discount to hold BTC in USDT terms, especially in stress.
-- **Off‑shore vs on‑shore segmentation:** Binance (USDT, off‑shore) is deep but less regulated; Coinbase (USD, on‑shore) is shallower but carries regulatory and banking protections. Capital, KYC, and regulatory frictions slow down arbitrage flows between these venues.
-- **Stress dynamics:** During the March 10–13 banking/stablecoin turmoil, demand for "real USD" BTC rises and off‑shore venues see forced selling and funding pressures, deepening the USDT discount and generating the pronounced negative tail.
-- **Constrained arbitrage:** High AR(1) coefficients and long half‑lives show that even large, cost‑adjusted dislocations do not disappear instantly, consistent with capital, balance‑sheet, and risk‑limit constraints on arbitrageurs.
-
----
-
-## 9. Advanced Econometric, Trading, and Risk Results
-
-### Cointegration and Granger Causality
-- **Johansen test**: Strong evidence for at least one cointegrating relationship between BTCUSDT and BTCUSD (eigenvalue ≈ 26.75 > critical values), confirming a long-run equilibrium.
-- **Engle-Granger test**: p-value ≈ 0.18, so we do not strongly reject the null of no cointegration at conventional levels, but the Johansen result dominates for this bivariate system.
-- **Granger causality**: Both directions are highly significant, but USDT→USD is especially strong (p-values < 0.01 for all lags). This means price moves in USDT markets help forecast USD markets, consistent with Binance's leading role in global BTC price discovery.
-
-### Rolling Volatility and Correlation
-- Rolling volatility and return correlation between venues are visualized in Figure 5. Volatility spikes and correlation dips coincide with stress periods, confirming the impact of market turmoil on price dynamics.
-
-### Outlier Timeline and Frequency
-- Outlier events (large basis deviations) cluster during stress and show distinct intraday patterns. Figure 6 (multi-sigma) shows the timeline and daily frequency of outliers for |z|>1, 2, 3. This directly visualizes when and how much clustering occurs, highlighting stress and regime shifts.
-
-### Trade Simulation and Risk Metrics
-- A simple mean-reversion strategy (trading when the basis exceeds the cost band) yields:
-  - **17 trades**
-  - **Hit rate:** 70.6%
-  - **Mean P&L:** 0.00070
-  - **Annualized return:** 102.4%
-- Risk metrics:
-  - **VaR_95:** −0.00639
-  - **Max drawdown:** −0.00934
-- These results show that while the strategy is profitable in this sample, it is not riskless—drawdowns and tail risk are present, and opportunities are clustered in stress.
-
-### Robustness Checks
-- Varying the fee band from 0.3% to 0.7% changes the share of minutes exceeding costs from 36.4% to 7.9%, but the main qualitative findings are robust. Mids-based robustness was not available due to data limitations.
-
-### Expanded Economic Discussion
-- The lead-lag structure (Granger) and cointegration confirm that Binance/USDT markets often lead price discovery, but the linkage is not perfect in the short run.
-- Outlier and risk analysis show that stress periods create both more frequent and more clustered arbitrage opportunities, but also higher risk and drawdowns.
-- The robustness of results to fee bands and the persistence of dislocations reinforce the story of constrained, risky, and slow arbitrage between venues.
-
----
-
-## 10. Explicit Economic Interpretation and IAQF Motivation
-
-USDT trades as a funding currency rather than a risk-free USD proxy because it carries unique credit, regulatory, and convertibility risks. During stress, market participants demand a premium for holding or transacting in USDT, reflecting concerns about its peg, off-shore status, and the ability to convert to real USD. This makes USDT fundamentally different from on-shore, regulated USD, especially in crisis periods when the distinction between "crypto dollars" and actual bank dollars becomes economically meaningful.
-
-Arbitrage capital is constrained during stress due to a combination of credit risk, balance sheet limitations, regulatory frictions, and the operational complexity of moving funds between venues. Even when the basis appears to offer "free money" after costs, these constraints mean that not all market participants can or will step in to close the gap instantly. As a result, the basis does not mean-revert immediately; instead, dislocations persist for hours, especially during and after stress events, as arbitrageurs face real-world limits on capital, risk tolerance, and settlement speed.
-
-A key empirical insight is that BTCUSDT is never rich relative to BTCUSD after costs—arbitrage is strictly one-sided, with USDT persistently at a discount. This reflects the structural demand for USD over USDT in times of stress and the lack of natural flows in the opposite direction. Furthermore, the post-stress regime does not fully revert to pre-stress levels: the USDT discount remains elevated, indicating a lasting change in market structure or risk perception. This persistent, one-sided, and regime-dependent basis is a central finding, directly supporting the IAQF competition's focus on real-world frictions, funding risk, and the limits of arbitrage in digital asset markets.
-
----
-
-## Conclusions (Directly Answering Q1)
-
-Relative to the competition question, the evidence shows that:
-
-1. **Price relationship over time:** BTCUSDT and BTCUSD track each other very closely at 1‑minute frequency, but BTCUSDT trades at a **systematic discount** of roughly **0.2–0.3%** on average. The discount widens sharply (down to ~1–1.5%) during the March 10–13 stress event and remains more negative afterwards.
-2. **After transaction costs:** With a conservative **0.5%** round‑trip fee band, about **13.3%** of minutes (3 986 out of 29 950) have \(|b_t|\) above costs. These cost‑adjusted dislocations are almost entirely **one‑sided**: BTCUSDT is cheap vs BTCUSD; BTCUSDT is never meaningfully rich after costs.
-3. **Persistence:** AR(1) estimates imply very high persistence (overall \(\phi \approx 0.9985\)) with half‑lives of **4–6 hours** across regimes and about **7.5 hours** overall. The ADF test suggests the basis is extremely persistent but likely stationary. Economically, once a premium/discount opens—especially in stress—it decays only over hours, not minutes.
-4. **Drivers:** A regression with an AR(1) term shows that higher 60‑minute BTCUSD volatility and being in the stress window are associated with a **more negative basis**, while higher BTCUSD volume is modestly associated with a **less negative basis**. This supports a story where credit, funding, and regulatory frictions between USD and USDT markets, amplified by stress and volatility, create a persistent USDT discount that arbitrage cannot instantly close.
+The one-sidedness is striking: BTCUSDT is *never* rich enough relative to BTCUSD to justify a trade in the other direction. Arbitrage is constrained, directional, and regime-dependent.
 
 ---
 
 ## Figures
 
-- **Figure 1** – BTCUSDT vs BTCUSD mid prices (1‑minute). See [figures/fig_mid_prices.png](figures/fig_mid_prices.png).
-- **Figure 2** – Trading volume by venue (1‑minute). See [figures/fig_volumes.png](figures/fig_volumes.png).
-- **Figure 3** – BTCUSDT–BTCUSD log basis with 0.5% cost band. See [figures/fig_basis_with_band.png](figures/fig_basis_with_band.png).
-- **Figure 4** – Basis histograms: full sample, normal vs stress. See [figures/fig_basis_histograms.png](figures/fig_basis_histograms.png).
-- **Figure 5** – Rolling volatility and return correlation. See [figures/fig_rolling_vol_corr.png](figures/fig_rolling_vol_corr.png).
-- **Figure 6** – Outlier timeline and daily frequency (multi-sigma). See [figures/fig_outlier_timeline_multi.png](figures/fig_outlier_timeline_multi.png).
-- **Figure 7** – Trade simulation: P&L, hit rate, annualized return. See [figures/fig_trade_simulation.png](figures/fig_trade_simulation.png).
-- **Figure 8** – Risk and leverage metrics (VaR, drawdown). See [figures/fig_risk_leverage.png](figures/fig_risk_leverage.png).
-- **Figure 9** – Intraday/session pattern of cost-band exceedance. See [figures/fig_intraday_session.png](figures/fig_intraday_session.png).
+| | |
+|---|---|
+| ![Mid prices](figures/fig_mid_prices.png) | ![Basis with cost band](figures/fig_basis_with_band.png) |
+| ![Basis histograms](figures/fig_basis_histograms.png) | ![Rolling vol & correlation](figures/fig_rolling_vol_corr.png) |
+| ![Outlier timeline](figures/fig_outlier_timeline_multi.png) | ![Trade simulation](figures/fig_trade_simulation.png) |
 
 ---
 
-## Project Structure and How to Reproduce
-
-- `notebooks/Q1_cross_currency_basis.ipynb` – main analysis notebook (all tables and plots referenced above are produced here).
-- `src/download_coinbase_candles.py` – script to download historical BTC‑USD candles from Coinbase.
-- `data/raw/` – raw 1‑minute candle data from Binance (BTCUSDT) and Coinbase (BTCUSD).
-- `data/processed/` – cleaned and aligned datasets used by the notebook.
-- `tests/` – basic data‑integrity tests.
-- `requirements.txt` – Python dependencies.
-
-### Reproducing the analysis
-
-1. Create and activate a virtual environment in the project root:
+## Quick Start
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-# .venv\\Scripts\\activate  # Windows
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+jupyter notebook notebooks/Q1_cross_currency_basis.ipynb
 ```
 
-2. Ensure raw data CSVs are present under `data/raw/binance/BTCUSDT/` and `data/raw/coinbase/BTCUSD/` (or re‑run `src/download_coinbase_candles.py` for Coinbase).
-
-3. Open `notebooks/Q1_cross_currency_basis.ipynb` in VS Code or Jupyter and run all cells.
-
-This will regenerate the cleaned data, basis series, cost‑band metrics, persistence diagnostics, regression tables and the plots referred to in this README.
+To re-download Coinbase data:
+```bash
+python -m src.download_coinbase_candles
+```
 
 ---
+
+## Repository Layout
+
+```
+├── report.pdf                  # Full competition paper
+├── notebooks/
+│   └── Q1_cross_currency_basis.ipynb   # All analysis, tables, and plots
+├── src/
+│   └── download_coinbase_candles.py    # Coinbase REST API downloader
+├── data/
+│   ├── raw/                    # 1-min OHLCV candles (Binance & Coinbase)
+│   └── processed/              # Cleaned and aligned datasets
+├── figures/                    # All output charts (auto-generated by notebook)
+├── tests/                      # Data integrity tests
+└── requirements.txt
+```
+
+---
+
+## Methodology (brief)
+
+- **Data:** 1-minute OHLCV candles for BTCUSDT (Binance) and BTCUSD (Coinbase), March 1–21, 2023 — ~29,950 aligned observations after cleaning.
+- **Basis:** Log price difference $b_t = \log P^{USDT}_t - \log P^{USD}_t$. Negative = USDT cheaper.
+- **Transaction-cost band:** Symmetric round-trip fee of ±0.5% (Binance 0.10% + Coinbase 0.40%).
+- **Persistence:** AR(1) model with regime-specific half-lives; ADF/KPSS stationarity tests.
+- **Drivers:** OLS with HAC (Newey–West) standard errors — stress dummy, realized volatility, volume, lagged basis.
+- **Cointegration & price discovery:** Johansen trace test, VECM, Hasbrouck (1995) information shares, Granger causality.
+
+---
+
+*IAQF Annual Academic Student Competition 2026.*
