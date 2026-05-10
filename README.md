@@ -160,8 +160,7 @@ We construct the following drivers from the BTCUSD leg and the stress window def
 The main regression is
 
 $$
-	ext{basis}_t = \beta_0 + \beta_1\,\text{stress}_t + \beta_2\,\text{rv\_usd\_60,t}
-                  + \beta_3\,\text{volume\_usd\_scaled,t} + \beta_4\,\text{basis}_{t-1} + \varepsilon_t.
+\text{basis}_t = \beta_0 + \beta_1\,\text{stress}_t + \beta_2\,\text{rv\_usd\_60,t} + \beta_3\,\text{volume\_usd\_scaled,t} + \beta_4\,\text{basis}_{t-1} + \varepsilon_t.
 $$
 
 Qualitative results (from the OLS output):
@@ -220,7 +219,17 @@ Putting the distributions, cost‑band exceedances, persistence, and regressions
 
 ---
 
-## 10. Conclusions (Directly Answering Q1)
+## 10. Explicit Economic Interpretation and IAQF Motivation
+
+USDT trades as a funding currency rather than a risk-free USD proxy because it carries unique credit, regulatory, and convertibility risks. During stress, market participants demand a premium for holding or transacting in USDT, reflecting concerns about its peg, off-shore status, and the ability to convert to real USD. This makes USDT fundamentally different from on-shore, regulated USD, especially in crisis periods when the distinction between "crypto dollars" and actual bank dollars becomes economically meaningful.
+
+Arbitrage capital is constrained during stress due to a combination of credit risk, balance sheet limitations, regulatory frictions, and the operational complexity of moving funds between venues. Even when the basis appears to offer "free money" after costs, these constraints mean that not all market participants can or will step in to close the gap instantly. As a result, the basis does not mean-revert immediately; instead, dislocations persist for hours, especially during and after stress events, as arbitrageurs face real-world limits on capital, risk tolerance, and settlement speed.
+
+A key empirical insight is that BTCUSDT is never rich relative to BTCUSD after costs—arbitrage is strictly one-sided, with USDT persistently at a discount. This reflects the structural demand for USD over USDT in times of stress and the lack of natural flows in the opposite direction. Furthermore, the post-stress regime does not fully revert to pre-stress levels: the USDT discount remains elevated, indicating a lasting change in market structure or risk perception. This persistent, one-sided, and regime-dependent basis is a central finding, directly supporting the IAQF competition's focus on real-world frictions, funding risk, and the limits of arbitrage in digital asset markets.
+
+---
+
+## Conclusions (Directly Answering Q1)
 
 Relative to the competition question, the evidence shows that:
 
@@ -270,39 +279,5 @@ pip install -r requirements.txt
 3. Open `notebooks/Q1_cross_currency_basis.ipynb` in VS Code or Jupyter and run all cells.
 
 This will regenerate the cleaned data, basis series, cost‑band metrics, persistence diagnostics, regression tables and the plots referred to in this README.
-
----
-
-## 9. Advanced Econometric, Trading, and Risk Results
-
-### Cointegration and Granger Causality
-- **Johansen test**: Strong evidence for at least one cointegrating relationship between BTCUSDT and BTCUSD (eigenvalue ≈ 26.75 > critical values), confirming a long-run equilibrium.
-- **Engle-Granger test**: p-value ≈ 0.18, so we do not strongly reject the null of no cointegration at conventional levels, but the Johansen result dominates for this bivariate system.
-- **Granger causality**: Both directions are highly significant, but USDT→USD is especially strong (p-values < 0.01 for all lags). This means price moves in USDT markets help forecast USD markets, consistent with Binance's leading role in global BTC price discovery.
-
-### Rolling Volatility and Correlation
-- Rolling volatility and return correlation between venues are visualized in Figure 5. Volatility spikes and correlation dips coincide with stress periods, confirming the impact of market turmoil on price dynamics.
-
-### Outlier Timeline and Frequency
-- Outlier events (large basis deviations) cluster during stress and show distinct intraday patterns. Figure 6 (multi-sigma) shows the timeline and daily frequency of outliers for |z|>1, 2, 3. This directly visualizes when and how much clustering occurs, highlighting stress and regime shifts.
-
-### Trade Simulation and Risk Metrics
-- A simple mean-reversion strategy (trading when the basis exceeds the cost band) yields:
-  - **17 trades**
-  - **Hit rate:** 70.6%
-  - **Mean P&L:** 0.00070
-  - **Annualized return:** 102.4%
-- Risk metrics:
-  - **VaR_95:** −0.00639
-  - **Max drawdown:** −0.00934
-- These results show that while the strategy is profitable in this sample, it is not riskless—drawdowns and tail risk are present, and opportunities are clustered in stress.
-
-### Robustness Checks
-- Varying the fee band from 0.3% to 0.7% changes the share of minutes exceeding costs from 36.4% to 7.9%, but the main qualitative findings are robust. Mids-based robustness was not available due to data limitations.
-
-### Expanded Economic Discussion
-- The lead-lag structure (Granger) and cointegration confirm that Binance/USDT markets often lead price discovery, but the linkage is not perfect in the short run.
-- Outlier and risk analysis show that stress periods create both more frequent and more clustered arbitrage opportunities, but also higher risk and drawdowns.
-- The robustness of results to fee bands and the persistence of dislocations reinforce the story of constrained, risky, and slow arbitrage between venues.
 
 ---

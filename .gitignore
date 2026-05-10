@@ -1,9 +1,10 @@
-# Python / virtualenv
-.venv/
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.venv/
+venv/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -14,16 +15,19 @@ __pycache__/
 # VS Code
 .vscode/
 
-# Data (raw and processed). Already committed files will remain tracked; this
-# just prevents new large files from being added accidentally.
-data/raw/
-data/processed/
+# vCard (not project-related)
+*.vcf
 
-# Temporary / backup files
+# Reference papers (third-party PDFs — not our work)
+papers/
+
+# HTML notebook export artifacts
+Q1_cross_currency_basis.pdf
+Q1_cross_currency_basis_files/
+
+# Word temp/lock files
+~$*
+
+# Temp files
 *.tmp
-*.log
 *~
-
-#papers
-.papers/
-.tests/
